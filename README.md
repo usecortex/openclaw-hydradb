@@ -16,6 +16,10 @@ If you run OpenClaw via the local gateway, restart it too:
 openclaw gateway restart
 ```
 
+## Get Your Credentials
+1. Get your Cortex API Key from [Cortex AI](https://app.usecortex.ai)
+2. Get your Tenant ID from the Cortex dashboard
+
 ## Interactive Onboarding
 
 Run the interactive CLI wizard (recommended):
