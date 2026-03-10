@@ -1,6 +1,6 @@
 {
   "name": "@usecortex_ai/openclaw-cortex-ai",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "description": "OpenClaw plugin for Cortex AI — the State-of-the-art agentic memory system with auto-capture, recall, and knowledge graph context for open-claw",
   "license": "MIT",
