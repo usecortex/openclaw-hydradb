@@ -1,12 +1,12 @@
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { buildRecalledContext, envelopeForInjection } from "../context.ts"
 import { log } from "../log.ts"
 import { containsIgnoreTerm } from "../messages.ts"
 
 export function createRecallHook(
-	client: CortexClient,
-	cfg: CortexPluginConfig,
+	client: HydraClient,
+	cfg: HydraPluginConfig,
 ) {
 	return async (event: Record<string, unknown>) => {
 		const prompt = event.prompt as string | undefined

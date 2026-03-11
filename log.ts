@@ -5,7 +5,7 @@ export type LoggerBackend = {
 	debug?(msg: string): void
 }
 
-const TAG = "[cortex-ai]"
+const TAG = "[hydra-db]"
 
 let _backend: LoggerBackend | null = null
 let _debug = false

@@ -1,18 +1,18 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 
 export function registerCliCommands(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	cfg: CortexPluginConfig,
+	client: HydraClient,
+	cfg: HydraPluginConfig,
 	onboardingRegistrar?: (root: any) => void,
 ): void {
 	api.registerCli(
 		({ program }: { program: any }) => {
 			const root = program
-				.command("cortex")
-				.description("Cortex AI memory commands")
+				.command("hydra")
+				.description("Hydra DB memory commands")
 
 			root
 				.command("search")
@@ -92,6 +92,6 @@ export function registerCliCommands(
 
 			if (onboardingRegistrar) onboardingRegistrar(root)
 		},
-		{ commands: ["cortex"] },
+		{ commands: ["hydra"] },
 	)
 }

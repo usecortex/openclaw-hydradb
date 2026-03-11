@@ -1,11 +1,11 @@
-# Cortex AI — OpenClaw Plugin
+# Hydra DB — OpenClaw Plugin
 
-State-of-the-art agentic memory for OpenClaw powered by [Cortex AI](https://usecortex.ai). Automatically captures conversations, recalls relevant context with knowledge-graph connections, and injects them before every AI turn.
+State-of-the-art agentic memory for OpenClaw powered by [Hydra DB](https://hydradb.com). Automatically captures conversations, recalls relevant context with knowledge-graph connections, and injects them before every AI turn.
 
 ## Install
 
 ```bash
-openclaw plugins install @usecortex_ai/openclaw-cortex-ai
+openclaw plugins install @hydra_db/openclaw-hydra-db
 ```
 
 Restart OpenClaw after installing.
@@ -17,8 +17,8 @@ openclaw gateway restart
 ```
 
 ## Get Your Credentials
-1. Get your Cortex API Key from [Cortex AI](https://app.usecortex.ai)
-2. Get your Tenant ID from the Cortex dashboard
+1. Get your Hydra API Key from [Hydra DB](https://app.hydradb.com)
+2. Get your Tenant ID from the Hydra dashboard
 
 ## Interactive Onboarding
 
@@ -26,13 +26,13 @@ Run the interactive CLI wizard (recommended):
 
 ```bash
 # Basic onboarding (API key, tenant ID, sub-tenant, ignore term)
-openclaw cortex onboard
+openclaw hydra onboard
 
 # Advanced onboarding (all options including recall mode, graph context, etc.)
-openclaw cortex onboard --advanced
+openclaw hydra onboard --advanced
 ```
 
-The wizard guides you through configuration with colored prompts and **writes your config to** `plugins.entries.openclaw-cortex-ai.config` inside OpenClaw's settings file.
+The wizard guides you through configuration with colored prompts and **writes your config to** `plugins.entries.openclaw-hydra-db.config` inside OpenClaw's settings file.
 
 The path is resolved in the same order OpenClaw itself uses:
 
@@ -61,8 +61,8 @@ Two required values:
 Environment variables (recommended for secrets):
 
 ```bash
-export CORTEX_OPENCLAW_API_KEY="your-api-key"
-export CORTEX_OPENCLAW_TENANT_ID="your-tenant-id"
+export HYDRA_OPENCLAW_API_KEY="your-api-key"
+export HYDRA_OPENCLAW_TENANT_ID="your-tenant-id"
 ```
 
 Or configure directly in OpenClaw's settings file:
@@ -74,11 +74,11 @@ Or configure directly in OpenClaw's settings file:
 {
   "plugins": {
     "entries": {
-      "openclaw-cortex-ai": {
+      "openclaw-hydra-db": {
         "enabled": true,
         "config": {
-          "apiKey": "${CORTEX_OPENCLAW_API_KEY}",
-          "tenantId": "${CORTEX_OPENCLAW_TENANT_ID}"
+          "apiKey": "${HYDRA_OPENCLAW_API_KEY}",
+          "tenantId": "${HYDRA_OPENCLAW_TENANT_ID}"
         }
       }
     }
@@ -96,63 +96,63 @@ openclaw gateway restart
 
 | Key                  | Type        | Default               | Description                                                                    |
 | -------------------- | ----------- | --------------------- | ------------------------------------------------------------------------------ |
-| `subTenantId`      | `string`  | `"cortex-openclaw-plugin"` | Sub-tenant for data partitioning within your tenant                      |
+| `subTenantId`      | `string`  | `"hydra-openclaw-plugin"` | Sub-tenant for data partitioning within your tenant                      |
 | `autoRecall`       | `boolean` | `true`              | Inject relevant memories before every AI turn                                  |
 | `autoCapture`      | `boolean` | `true`              | Store conversation exchanges after every AI turn                               |
 | `maxRecallResults` | `number`  | `10`                | Max memory chunks injected into context per turn                               |
 | `recallMode`       | `string`  | `"fast"`            | `"fast"` or `"thinking"` (deeper personalised recall with graph traversal) |
 | `graphContext`     | `boolean` | `true`              | Include knowledge graph relations in recalled context                          |
-| `ignoreTerm`       | `string`  | `"cortex-ignore"`    | Messages containing this term are excluded from recall & capture              |
+| `ignoreTerm`       | `string`  | `"hydra-ignore"`    | Messages containing this term are excluded from recall & capture              |
 | `debug`            | `boolean` | `false`             | Verbose debug logs                                                             |
 
 ## How It Works
 
-- **Auto-Recall** — Before every AI turn, queries Cortex (`/recall/recall_preferences`) for relevant memories and injects graph-enriched context (entity paths, chunk relations, extra context).
-- **Auto-Capture** — After every AI turn, the last user/assistant exchange is sent to Cortex (`/memories/add_memory`) as conversation pairs with `infer: true` and `upsert: true`. The session ID is used as `source_id` so Cortex groups exchanges per session and builds a knowledge graph automatically.
+- **Auto-Recall** — Before every AI turn, queries Hydra (`/recall/recall_preferences`) for relevant memories and injects graph-enriched context (entity paths, chunk relations, extra context).
+- **Auto-Capture** — After every AI turn, the last user/assistant exchange is sent to Hydra (`/memories/add_memory`) as conversation pairs with `infer: true` and `upsert: true`. The session ID is used as `source_id` so Hydra groups exchanges per session and builds a knowledge graph automatically.
 
 ## Slash Commands
 
 | Command                     | Description                           |
 | --------------------------- | ------------------------------------- |
-| `/cortex-onboard`          | Show current configuration status     |
-| `/cortex-remember <text>` | Save something to Cortex memory       |
-| `/cortex-recall <query>`  | Search memories with relevance scores |
-| `/cortex-list`            | List all stored user memories         |
-| `/cortex-delete <id>`     | Delete a specific memory by its ID    |
-| `/cortex-get <source_id>` | Fetch the full content of a source    |
+| `/hydra-onboard`          | Show current configuration status     |
+| `/hydra-remember <text>` | Save something to Hydra memory       |
+| `/hydra-recall <query>`  | Search memories with relevance scores |
+| `/hydra-list`            | List all stored user memories         |
+| `/hydra-delete <id>`     | Delete a specific memory by its ID    |
+| `/hydra-get <source_id>` | Fetch the full content of a source    |
 
 ## AI Tools
 
 | Tool                   | Description |
 | ---------------------- | ----------- |
-| `cortex_store`         | Save the recent conversation history to Cortex as memory |
-| `cortex_search`        | Search Cortex memories (returns graph-enriched context) |
-| `cortex_list_memories` | List all stored user memories (IDs + summaries) |
-| `cortex_get_content`   | Fetch full content for a specific `source_id` |
-| `cortex_delete_memory` | Delete a memory by `memory_id` (use only when user explicitly asks) |
+| `hydra_store`         | Save the recent conversation history to Hydra as memory |
+| `hydra_search`        | Search Hydra memories (returns graph-enriched context) |
+| `hydra_list_memories` | List all stored user memories (IDs + summaries) |
+| `hydra_get_content`   | Fetch full content for a specific `source_id` |
+| `hydra_delete_memory` | Delete a memory by `memory_id` (use only when user explicitly asks) |
 
 ## CLI
 
 ```bash
-openclaw cortex onboard             # Interactive onboarding wizard
-openclaw cortex onboard --advanced  # Advanced onboarding wizard
-openclaw cortex search <query>      # Search memories
-openclaw cortex list                # List all user memories
-openclaw cortex delete <id>         # Delete a memory
-openclaw cortex get <source_id>     # Fetch source content
-openclaw cortex status              # Show plugin configuration
+openclaw hydra onboard             # Interactive onboarding wizard
+openclaw hydra onboard --advanced  # Advanced onboarding wizard
+openclaw hydra search <query>      # Search memories
+openclaw hydra list                # List all user memories
+openclaw hydra delete <id>         # Delete a memory
+openclaw hydra get <source_id>     # Fetch source content
+openclaw hydra status              # Show plugin configuration
 ```
 
 ## Troubleshooting
 
-### `Not configured. Run openclaw cortex onboard`
+### `Not configured. Run openclaw hydra onboard`
 
 This means the plugin is enabled, but credentials are missing.
 
 Run:
 
 ```bash
-openclaw cortex onboard
+openclaw hydra onboard
 openclaw gateway restart
 ```
 
@@ -166,7 +166,7 @@ openclaw gateway restart
 
 ## Context Injection
 
-Recalled context is injected inside `<cortex-context>` tags containing:
+Recalled context is injected inside `<hydra-context>` tags containing:
 
 - **Entity Paths** — Knowledge graph paths connecting entities relevant to the query
 - **Context Chunks** — Retrieved memory chunks with source titles, graph relations, and linked extra context

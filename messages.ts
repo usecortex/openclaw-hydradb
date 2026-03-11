@@ -1,4 +1,4 @@
-import type { ConversationTurn } from "./types/cortex.ts"
+import type { ConversationTurn } from "./types/hydra.ts"
 
 export function containsIgnoreTerm(text: string, ignoreTerm: string): boolean {
 	return text.toLowerCase().includes(ignoreTerm.toLowerCase())

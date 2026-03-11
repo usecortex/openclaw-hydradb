@@ -1,9 +1,9 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import { CortexClient } from "./client.ts"
-import type { CortexPluginConfig } from "./config.ts"
+import { HydraClient } from "./client.ts"
+import type { HydraPluginConfig } from "./config.ts"
 import { registerOnboardingCli as createOnboardingCliRegistrar, registerOnboardingSlashCommands } from "./commands/onboarding.ts"
 import { registerSlashCommands } from "./commands/slash.ts"
-import { cortexConfigSchema, tryParseConfig } from "./config.ts"
+import { hydraConfigSchema, tryParseConfig } from "./config.ts"
 import { createIngestionHook } from "./hooks/capture.ts"
 import { createRecallHook } from "./hooks/recall.ts"
 import { log } from "./log.ts"
@@ -14,37 +14,37 @@ import { registerSearchTool } from "./tools/search.ts"
 import { registerStoreTool } from "./tools/store.ts"
 
 const NOT_CONFIGURED_MSG =
-	"[cortex-ai] Not configured. Run `openclaw cortex onboard` to set up credentials."
+	"[hydra-db] Not configured. Run `openclaw hydra onboard` to set up credentials."
 
 export default {
-	id: "openclaw-cortex-ai",
-	name: "Cortex AI",
+	id: "openclaw-hydra-db",
+	name: "Hydra DB",
 	description:
-		"State-of-the-art agentic memory for OpenClaw powered by Cortex AI — auto-capture, recall, and graph-enriched context",
+		"State-of-the-art agentic memory for OpenClaw powered by Hydra DB — auto-capture, recall, and graph-enriched context",
 	kind: "memory" as const,
-	configSchema: cortexConfigSchema,
+	configSchema: hydraConfigSchema,
 
 	register(api: OpenClawPluginApi) {
 		const cfg = tryParseConfig(api.pluginConfig)
-		const cliClient = cfg ? new CortexClient(cfg.apiKey, cfg.tenantId, cfg.subTenantId) : null
+		const cliClient = cfg ? new HydraClient(cfg.apiKey, cfg.tenantId, cfg.subTenantId) : null
 
 		// Always register ALL CLI commands so they appear in help text.
 		// Non-onboard commands guard on credentials at runtime.
 		api.registerCli(
 			({ program }: { program: any }) => {
 				const root = program
-					.command("cortex")
-					.description("Cortex AI memory commands")
+					.command("hydra")
+					.description("Hydra DB memory commands")
 
 				createOnboardingCliRegistrar(cfg ?? undefined)(root)
-				registerCortexCliCommands(root, cliClient, cfg)
+				registerHydraCliCommands(root, cliClient, cfg)
 			},
-			{ commands: ["cortex"] },
+			{ commands: ["hydra"] },
 		)
 
 		if (!cfg) {
 			api.registerService({
-				id: "openclaw-cortex-ai",
+				id: "openclaw-hydra-db",
 				start: () => console.log(NOT_CONFIGURED_MSG),
 				stop: () => {},
 			})
@@ -54,7 +54,7 @@ export default {
 		// Full plugin registration — credentials present
 		log.init(api.logger, cfg.debug)
 
-		const client = new CortexClient(cfg.apiKey, cfg.tenantId, cfg.subTenantId)
+		const client = new HydraClient(cfg.apiKey, cfg.tenantId, cfg.subTenantId)
 
 		let activeSessionId: string | undefined
 		let conversationMessages: unknown[] = []
@@ -97,7 +97,7 @@ export default {
 		registerOnboardingSlashCommands(api, client, cfg)
 
 		api.registerService({
-			id: "openclaw-cortex-ai",
+			id: "openclaw-hydra-db",
 			start: () => log.info("plugin started"),
 			stop: () => log.info("plugin stopped"),
 		})
@@ -105,15 +105,15 @@ export default {
 }
 
 /**
- * Register all `cortex *` CLI subcommands.
+ * Register all `hydra *` CLI subcommands.
  * Commands other than `onboard` guard on valid credentials at runtime.
  */
-function registerCortexCliCommands(
+function registerHydraCliCommands(
 	root: any,
-	client: CortexClient | null,
-	cfg: CortexPluginConfig | null,
+	client: HydraClient | null,
+	cfg: HydraPluginConfig | null,
 ): void {
-	const requireCreds = (): { client: CortexClient; cfg: CortexPluginConfig } | null => {
+	const requireCreds = (): { client: HydraClient; cfg: HydraPluginConfig } | null => {
 		if (client && cfg) return { client, cfg }
 		console.error(NOT_CONFIGURED_MSG)
 		return null
