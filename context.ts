@@ -3,7 +3,7 @@ import type {
 	RecallResponse,
 	ScoredPath,
 	VectorChunk,
-} from "./types/cortex.ts"
+} from "./types/hydra.ts"
 
 function formatTriplet(triplet: PathTriplet): string {
 	const src = triplet.source?.name ?? "?"
@@ -173,8 +173,8 @@ export function envelopeForInjection(contextBody: string): string {
 	if (!contextBody.trim()) return ""
 
 	const lines = [
-		"<cortex-context>",
-		"[MEMORIES AND PAST CONVERSATIONS — retrieved by Cortex AI]",
+		"<hydra-context>",
+		"[MEMORIES AND PAST CONVERSATIONS — retrieved by Hydra DB]",
 		"",
 		"Below are memories and knowledge-graph connections that may be relevant",
 		"to the current conversation. Integrate them naturally when they add value.",
@@ -185,7 +185,7 @@ export function envelopeForInjection(contextBody: string): string {
 		contextBody,
 		"",
 		"[END OF MEMORY CONTEXT]",
-		"</cortex-context>",
+		"</hydra-context>",
 	]
 	return lines.join("\n")
 }

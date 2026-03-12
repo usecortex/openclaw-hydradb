@@ -1,20 +1,20 @@
 import { Type } from "@sinclair/typebox"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
 
 export function registerListTool(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	_cfg: CortexPluginConfig,
+	client: HydraClient,
+	_cfg: HydraPluginConfig,
 ): void {
 	api.registerTool(
 		{
-			name: "cortex_list_memories",
-			label: "Cortex List Memories",
+			name: "hydra_list_memories",
+			label: "Hydra List Memories",
 			description:
-				"List all user memories stored in Cortex. Returns memory IDs and content summaries. Use this when the user asks what you remember about them or wants to see their stored information.",
+				"List all user memories stored in Hydra. Returns memory IDs and content summaries. Use this when the user asks what you remember about them or wants to see their stored information.",
 			parameters: Type.Object({}),
 			async execute(_toolCallId: string, _params: Record<string, never>) {
 				log.debug("list tool: fetching all memories")
@@ -51,6 +51,6 @@ export function registerListTool(
 				}
 			},
 		},
-		{ name: "cortex_list_memories" },
+		{ name: "hydra_list_memories" },
 	)
 }

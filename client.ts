@@ -11,9 +11,9 @@ import type {
 	ListSourcesResponse,
 	RecallRequest,
 	RecallResponse,
-} from "./types/cortex.ts"
+} from "./types/hydra.ts"
 
-const API_BASE = "https://api.usecortex.ai"
+const API_BASE = "https://api.hydradb.com"
 
 const INGEST_INSTRUCTIONS =
 	"Focus on extracting user preferences, habits, opinions, likes, dislikes, " +
@@ -22,7 +22,7 @@ const INGEST_INSTRUCTIONS =
 	"name, age, email ids, phone numbers, etc. along with the original name and context " +
 	"so that it can be used to personalise future interactions."
 
-export class CortexClient {
+export class HydraClient {
 	private apiKey: string
 	private tenantId: string
 	private subTenantId: string
@@ -51,7 +51,7 @@ export class CortexClient {
 		})
 		if (!res.ok) {
 			const text = await res.text().catch(() => "")
-			throw new Error(`Cortex ${path} → ${res.status}: ${text}`)
+			throw new Error(`Hydra ${path} → ${res.status}: ${text}`)
 		}
 		return res.json() as Promise<T>
 	}
@@ -66,7 +66,7 @@ export class CortexClient {
 		})
 		if (!res.ok) {
 			const text = await res.text().catch(() => "")
-			throw new Error(`Cortex ${path} → ${res.status}: ${text}`)
+			throw new Error(`Hydra ${path} → ${res.status}: ${text}`)
 		}
 		return res.json() as Promise<T>
 	}

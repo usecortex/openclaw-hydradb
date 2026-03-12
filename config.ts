@@ -1,4 +1,4 @@
-export type CortexPluginConfig = {
+export type HydraPluginConfig = {
 	apiKey: string
 	tenantId: string
 	subTenantId: string
@@ -24,8 +24,8 @@ const KNOWN_KEYS = new Set([
 	"debug",
 ])
 
-const DEFAULT_SUB_TENANT = "cortex-openclaw-plugin"
-const DEFAULT_IGNORE_TERM = "cortex-ignore"
+const DEFAULT_SUB_TENANT = "hydra-openclaw-plugin"
+const DEFAULT_IGNORE_TERM = "hydra-ignore"
 
 function envOrNull(name: string): string | undefined {
 	return typeof process !== "undefined" ? process.env[name] : undefined
@@ -39,7 +39,7 @@ function resolveEnvVars(value: string): string {
 	})
 }
 
-export function parseConfig(raw: unknown): CortexPluginConfig {
+export function parseConfig(raw: unknown): HydraPluginConfig {
 	const cfg =
 		raw && typeof raw === "object" && !Array.isArray(raw)
 			? (raw as Record<string, unknown>)
@@ -47,28 +47,28 @@ export function parseConfig(raw: unknown): CortexPluginConfig {
 
 	const unknown = Object.keys(cfg).filter((k) => !KNOWN_KEYS.has(k))
 	if (unknown.length > 0) {
-		throw new Error(`cortex-ai: unrecognized config keys: ${unknown.join(", ")}`)
+		throw new Error(`hydra-db: unrecognized config keys: ${unknown.join(", ")}`)
 	}
 
 	const apiKey =
 		typeof cfg.apiKey === "string" && cfg.apiKey.length > 0
 			? resolveEnvVars(cfg.apiKey)
-			: envOrNull("CORTEX_OPENCLAW_API_KEY")
+			: envOrNull("HYDRA_OPENCLAW_API_KEY")
 
 	if (!apiKey) {
 		throw new Error(
-			"cortex-ai: apiKey is required — set it in plugin config or via CORTEX_OPENCLAW_API_KEY env var",
+			"hydra-db: apiKey is required — set it in plugin config or via HYDRA_OPENCLAW_API_KEY env var",
 		)
 	}
 
 	const tenantId =
 		typeof cfg.tenantId === "string" && cfg.tenantId.length > 0
 			? resolveEnvVars(cfg.tenantId)
-			: envOrNull("CORTEX_OPENCLAW_TENANT_ID")
+			: envOrNull("HYDRA_OPENCLAW_TENANT_ID")
 
 	if (!tenantId) {
 		throw new Error(
-			"cortex-ai: tenantId is required — set it in plugin config or via CORTEX_OPENCLAW_TENANT_ID env var",
+			"hydra-db: tenantId is required — set it in plugin config or via HYDRA_OPENCLAW_TENANT_ID env var",
 		)
 	}
 
@@ -97,7 +97,7 @@ export function parseConfig(raw: unknown): CortexPluginConfig {
 	}
 }
 
-export function tryParseConfig(raw: unknown): CortexPluginConfig | null {
+export function tryParseConfig(raw: unknown): HydraPluginConfig | null {
 	try {
 		return parseConfig(raw)
 	} catch {
@@ -117,12 +117,12 @@ function parseConfigSoft(raw: unknown): Record<string, unknown> {
 
 	const unknown = Object.keys(cfg).filter((k) => !KNOWN_KEYS.has(k))
 	if (unknown.length > 0) {
-		throw new Error(`cortex-ai: unrecognized config keys: ${unknown.join(", ")}`)
+		throw new Error(`hydra-db: unrecognized config keys: ${unknown.join(", ")}`)
 	}
 
 	return cfg
 }
 
-export const cortexConfigSchema = {
+export const hydraConfigSchema = {
 	parse: parseConfigSoft,
 }

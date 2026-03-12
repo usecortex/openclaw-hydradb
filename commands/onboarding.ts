@@ -3,15 +3,15 @@ import * as os from "node:os"
 import * as path from "node:path"
 import * as readline from "node:readline"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
 
 // ── Defaults (used when config is not yet available) ──
 
 const DEFAULTS = {
-	subTenantId: "cortex-openclaw-plugin",
-	ignoreTerm: "cortex-ignore",
+	subTenantId: "hydra-openclaw-plugin",
+	ignoreTerm: "hydra-ignore",
 	autoRecall: true,
 	autoCapture: true,
 	maxRecallResults: 10,
@@ -139,7 +139,7 @@ async function promptNumber(
 function printBanner(): void {
 	console.log()
 	console.log(`  ${c.bgCyan}${c.black}${c.bold}                              ${c.reset}`)
-	console.log(`  ${c.bgCyan}${c.black}${c.bold}    ◆  Cortex AI — Onboard    ${c.reset}`)
+	console.log(`  ${c.bgCyan}${c.black}${c.bold}    ◆  Hydra DB — Onboard    ${c.reset}`)
 	console.log(`  ${c.bgCyan}${c.black}${c.bold}                              ${c.reset}`)
 	console.log()
 }
@@ -239,11 +239,11 @@ function persistConfig(configObj: Record<string, unknown>): boolean {
 
 		if (!root.plugins) root.plugins = {}
 		if (!root.plugins.entries) root.plugins.entries = {}
-		if (!root.plugins.entries["openclaw-cortex-ai"]) {
-			root.plugins.entries["openclaw-cortex-ai"] = { enabled: true }
+		if (!root.plugins.entries["openclaw-hydra-db"]) {
+			root.plugins.entries["openclaw-hydra-db"] = { enabled: true }
 		}
 
-		root.plugins.entries["openclaw-cortex-ai"].config = configObj
+		root.plugins.entries["openclaw-hydra-db"].config = configObj
 
 		fs.writeFileSync(OPENCLAW_CONFIG_PATH, JSON.stringify(root, null, 2) + "\n")
 		return true
@@ -254,12 +254,12 @@ function persistConfig(configObj: Record<string, unknown>): boolean {
 
 // ── Wizards ──
 
-async function runBasicWizard(cfg?: CortexPluginConfig): Promise<void> {
+async function runBasicWizard(cfg?: HydraPluginConfig): Promise<void> {
 	const rl = createRl()
 
 	try {
 		printBanner()
-		console.log(`  ${c.dim}Configure the essential settings for Cortex AI.${c.reset}`)
+		console.log(`  ${c.dim}Configure the essential settings for Hydra DB.${c.reset}`)
 		console.log(`  ${c.dim}Press Enter to accept defaults shown in parentheses.${c.reset}`)
 
 		printSection("Credentials")
@@ -311,7 +311,7 @@ async function runBasicWizard(cfg?: CortexPluginConfig): Promise<void> {
 			}
 		} else {
 			console.log()
-			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw-cortex-ai.config:${c.reset}`)
+			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw-hydra-db.config:${c.reset}`)
 			console.log()
 			for (const line of JSON.stringify(configObj, null, 2).split("\n")) {
 				console.log(`    ${c.cyan}${line}${c.reset}`)
@@ -319,13 +319,13 @@ async function runBasicWizard(cfg?: CortexPluginConfig): Promise<void> {
 		}
 
 		console.log()
-		console.log(`  ${c.dim}Run \`cortex onboard --advanced\` to fine-tune all options.${c.reset}`)
+		console.log(`  ${c.dim}Run \`hydra onboard --advanced\` to fine-tune all options.${c.reset}`)
 	} finally {
 		rl.close()
 	}
 }
 
-async function runAdvancedWizard(cfg?: CortexPluginConfig): Promise<void> {
+async function runAdvancedWizard(cfg?: HydraPluginConfig): Promise<void> {
 	const rl = createRl()
 
 	try {
@@ -415,7 +415,7 @@ async function runAdvancedWizard(cfg?: CortexPluginConfig): Promise<void> {
 			}
 		} else {
 			console.log()
-			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw-cortex-ai.config:${c.reset}`)
+			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw-hydra-db.config:${c.reset}`)
 			console.log()
 			for (const line of JSON.stringify(configObj, null, 2).split("\n")) {
 				console.log(`    ${c.cyan}${line}${c.reset}`)
@@ -429,12 +429,12 @@ async function runAdvancedWizard(cfg?: CortexPluginConfig): Promise<void> {
 // ── Registration (CLI + Slash) ──
 
 export function registerOnboardingCli(
-	cfg?: CortexPluginConfig,
+	cfg?: HydraPluginConfig,
 ): (root: any) => void {
 	return (root: any) => {
 		root
 			.command("onboard")
-			.description("Interactive Cortex AI onboarding wizard")
+			.description("Interactive Hydra DB onboarding wizard")
 			.option("--advanced", "Configure all options (credentials, behaviour, recall, debug)")
 			.action(async (opts: { advanced?: boolean }) => {
 				if (opts.advanced) {
@@ -448,18 +448,18 @@ export function registerOnboardingCli(
 
 export function registerOnboardingSlashCommands(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	cfg: CortexPluginConfig,
+	client: HydraClient,
+	cfg: HydraPluginConfig,
 ): void {
 	api.registerCommand({
-		name: "cortex-onboard",
-		description: "Show Cortex plugin config status (run `cortex onboard` in CLI for interactive wizard)",
+		name: "hydra-onboard",
+		description: "Show Hydra plugin config status (run `hydra onboard` in CLI for interactive wizard)",
 		acceptsArgs: false,
 		requireAuth: false,
 		handler: async () => {
 			try {
 				const lines: string[] = [
-					"=== Cortex AI — Current Config ===",
+					"=== Hydra DB — Current Config ===",
 					"",
 					`  API Key:       ${cfg.apiKey ? `${mask(cfg.apiKey)} ✓` : "NOT SET ✗"}`,
 					`  Tenant ID:     ${cfg.tenantId ? `${mask(cfg.tenantId, 8)} ✓` : "NOT SET ✗"}`,
@@ -472,12 +472,12 @@ export function registerOnboardingSlashCommands(
 					`  Max Results:   ${cfg.maxRecallResults}`,
 					`  Debug:         ${cfg.debug}`,
 					"",
-					"Tip: Run `cortex onboard` in the CLI for an interactive configuration wizard,",
-					"     or `cortex onboard --advanced` for all options.",
+					"Tip: Run `hydra onboard` in the CLI for an interactive configuration wizard,",
+					"     or `hydra onboard --advanced` for all options.",
 				]
 				return { text: lines.join("\n") }
 			} catch (err) {
-				log.error("/cortex-onboard", err)
+				log.error("/hydra-onboard", err)
 				return { text: "Failed to show status. Check logs." }
 			}
 		},

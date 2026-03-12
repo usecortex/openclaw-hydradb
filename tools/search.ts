@@ -1,23 +1,23 @@
 import { Type } from "@sinclair/typebox"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { buildRecalledContext } from "../context.ts"
 import { log } from "../log.ts"
-import type { VectorChunk } from "../types/cortex.ts"
+import type { VectorChunk } from "../types/hydra.ts"
 
 
 export function registerSearchTool(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	cfg: CortexPluginConfig,
+	client: HydraClient,
+	cfg: HydraPluginConfig,
 ): void {
 	api.registerTool(
 		{
-			name: "cortex_search",
-			label: "Cortex Search",
+			name: "hydra_search",
+			label: "Hydra Search",
 			description:
-				"Search through Cortex AI memories. Returns relevant chunks with graph-enriched context.",
+				"Search through Hydra DB memories. Returns relevant chunks with graph-enriched context.",
 			parameters: Type.Object({
 				query: Type.String({ description: "Search query" }),
 				limit: Type.Optional(
@@ -59,6 +59,6 @@ export function registerSearchTool(
 				}
 			},
 		},
-		{ name: "cortex_search" },
+		{ name: "hydra_search" },
 	)
 }

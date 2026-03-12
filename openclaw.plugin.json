@@ -1,22 +1,22 @@
 {
-	"id": "openclaw-cortex-ai",
+	"id": "openclaw-hydra-db",
 	"kind": "memory",
 	"uiHints": {
 		"apiKey": {
-			"label": "Cortex API Key",
+			"label": "Hydra API Key",
 			"sensitive": true,
-			"placeholder": "your-cortex-api-key",
-			"help": "Your API key from Cortex (or use ${CORTEX_OPENCLAW_API_KEY})"
+			"placeholder": "your-hydra-api-key",
+			"help": "Your API key from Hydra (or use ${HYDRA_OPENCLAW_API_KEY})"
 		},
 		"tenantId": {
 			"label": "Tenant ID",
 			"placeholder": "tenant-01",
-			"help": "Your Cortex tenant identifier (or use ${CORTEX_OPENCLAW_TENANT_ID})"
+			"help": "Your Hydra tenant identifier (or use ${HYDRA_OPENCLAW_TENANT_ID})"
 		},
 		"subTenantId": {
 			"label": "Sub-Tenant ID",
-			"placeholder": "cortex-openclaw",
-			"help": "Sub-tenant for data partitioning (default: cortex-openclaw)",
+			"placeholder": "hydra-openclaw",
+			"help": "Sub-tenant for data partitioning (default: hydra-openclaw)",
 			"advanced": true
 		},
 		"autoRecall": {
@@ -45,8 +45,8 @@
 		},
 		"ignoreTerm": {
 			"label": "Ignore Term",
-			"placeholder": "cortex-ignore",
-			"help": "Messages containing this term will be excluded from recall and capture (default: cortex-ignore)"
+			"placeholder": "hydra-ignore",
+			"help": "Messages containing this term will be excluded from recall and capture (default: hydra-ignore)"
 		},
 		"debug": {
 			"label": "Debug Logging",

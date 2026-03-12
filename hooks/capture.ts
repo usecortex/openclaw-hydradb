@@ -1,19 +1,19 @@
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
 import { extractAllTurns, filterIgnoredTurns } from "../messages.ts"
 import { toHookSourceId } from "../session.ts"
-import type { ConversationTurn } from "../types/cortex.ts"
+import type { ConversationTurn } from "../types/hydra.ts"
 
 const MAX_HOOK_TURNS = -1
 
 function removeInjectedBlocks(text: string): string {
-	return text.replace(/<cortex-context>[\s\S]*?<\/cortex-context>\s*/g, "").trim()
+	return text.replace(/<hydra-context>[\s\S]*?<\/hydra-context>\s*/g, "").trim()
 }
 
 export function createIngestionHook(
-	client: CortexClient,
-	cfg: CortexPluginConfig,
+	client: HydraClient,
+	cfg: HydraPluginConfig,
 ) {
 	return async (event: Record<string, unknown>, sessionId: string | undefined) => {
 		try {

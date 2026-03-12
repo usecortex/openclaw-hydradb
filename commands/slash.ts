@@ -1,6 +1,6 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
 import { toToolSourceId } from "../session.ts"
 
@@ -10,18 +10,18 @@ function preview(text: string, max = 80): string {
 
 export function registerSlashCommands(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	cfg: CortexPluginConfig,
+	client: HydraClient,
+	cfg: HydraPluginConfig,
 	getSessionId: () => string | undefined,
 ): void {
 	api.registerCommand({
-		name: "cortex-remember",
-		description: "Save a piece of information to Cortex memory",
+		name: "hydra-remember",
+		description: "Save a piece of information to Hydra memory",
 		acceptsArgs: true,
 		requireAuth: true,
 		handler: async (ctx: { args?: string }) => {
 			const text = ctx.args?.trim()
-			if (!text) return { text: "Usage: /cortex-remember <text to store>" }
+			if (!text) return { text: "Usage: /hydra-remember <text to store>" }
 
 			try {
 				const sid = getSessionId()
@@ -29,20 +29,20 @@ export function registerSlashCommands(
 				await client.ingestText(text, { sourceId, title: "Manual Memory", infer: true })
 				return { text: `Saved: "${preview(text, 60)}"` }
 			} catch (err) {
-				log.error("/cortex-remember", err)
+				log.error("/hydra-remember", err)
 				return { text: "Failed to save. Check logs." }
 			}
 		},
 	})
 
 	api.registerCommand({
-		name: "cortex-recall",
-		description: "Search your Cortex memories",
+		name: "hydra-recall",
+		description: "Search your Hydra memories",
 		acceptsArgs: true,
 		requireAuth: true,
 		handler: async (ctx: { args?: string }) => {
 			const query = ctx.args?.trim()
-			if (!query) return { text: "Usage: /cortex-recall <query>" }
+			if (!query) return { text: "Usage: /hydra-recall <query>" }
 
 			try {
 				const res = await client.recall(query, {
@@ -63,14 +63,14 @@ export function registerSlashCommands(
 
 				return { text: `Found ${res.chunks.length} chunks:\n\n${lines.join("\n")}` }
 			} catch (err) {
-				log.error("/cortex-recall", err)
+				log.error("/hydra-recall", err)
 				return { text: "Recall failed. Check logs." }
 			}
 		},
 	})
 
 	api.registerCommand({
-		name: "cortex-list",
+		name: "hydra-list",
 		description: "List all stored user memories",
 		acceptsArgs: false,
 		requireAuth: true,
@@ -85,20 +85,20 @@ export function registerSlashCommands(
 				)
 				return { text: `${memories.length} memories:\n\n${lines.join("\n")}` }
 			} catch (err) {
-				log.error("/cortex-list", err)
+				log.error("/hydra-list", err)
 				return { text: "Failed to list memories. Check logs." }
 			}
 		},
 	})
 
 	api.registerCommand({
-		name: "cortex-delete",
+		name: "hydra-delete",
 		description: "Delete a specific memory by its ID",
 		acceptsArgs: true,
 		requireAuth: true,
 		handler: async (ctx: { args?: string }) => {
 			const memoryId = ctx.args?.trim()
-			if (!memoryId) return { text: "Usage: /cortex-delete <memory_id>" }
+			if (!memoryId) return { text: "Usage: /hydra-delete <memory_id>" }
 
 			try {
 				const res = await client.deleteMemory(memoryId)
@@ -107,20 +107,20 @@ export function registerSlashCommands(
 				}
 				return { text: `Memory ${memoryId} was not found or already deleted.` }
 			} catch (err) {
-				log.error("/cortex-delete", err)
+				log.error("/hydra-delete", err)
 				return { text: "Delete failed. Check logs." }
 			}
 		},
 	})
 
 	api.registerCommand({
-		name: "cortex-get",
+		name: "hydra-get",
 		description: "Fetch the content of a specific source by its ID",
 		acceptsArgs: true,
 		requireAuth: true,
 		handler: async (ctx: { args?: string }) => {
 			const sourceId = ctx.args?.trim()
-			if (!sourceId) return { text: "Usage: /cortex-get <source_id>" }
+			if (!sourceId) return { text: "Usage: /hydra-get <source_id>" }
 
 			try {
 				const res = await client.fetchContent(sourceId)
@@ -130,7 +130,7 @@ export function registerSlashCommands(
 				const content = res.content ?? res.content_base64 ?? "(no text content)"
 				return { text: `Source: ${sourceId}\n\n${preview(content, 2000)}` }
 			} catch (err) {
-				log.error("/cortex-get", err)
+				log.error("/hydra-get", err)
 				return { text: "Fetch failed. Check logs." }
 			}
 		},

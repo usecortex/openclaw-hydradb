@@ -1,8 +1,8 @@
 {
-  "name": "@usecortex_ai/openclaw-cortex-ai",
-  "version": "0.1.5",
+  "name": "@hydra_db/openclaw",
+  "version": "0.1.0",
   "type": "module",
-  "description": "OpenClaw plugin for Cortex AI — the State-of-the-art agentic memory system with auto-capture, recall, and knowledge graph context for open-claw",
+  "description": "OpenClaw plugin for Hydra DB — the State-of-the-art agentic memory system with auto-capture, recall, and knowledge graph context for open-claw",
   "license": "MIT",
   "dependencies": {
     "@sinclair/typebox": "0.34.47"

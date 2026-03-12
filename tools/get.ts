@@ -1,20 +1,20 @@
 import { Type } from "@sinclair/typebox"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
 
 export function registerGetTool(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	_cfg: CortexPluginConfig,
+	client: HydraClient,
+	_cfg: HydraPluginConfig,
 ): void {
 	api.registerTool(
 		{
-			name: "cortex_get_content",
-			label: "Cortex Get Content",
+			name: "hydra_get_content",
+			label: "Hydra Get Content",
 			description:
-				"Fetch the full content of a specific source from Cortex by its source ID. Use this to retrieve the complete text of a memory source when you need more details than what's shown in search results.",
+				"Fetch the full content of a specific source from Hydra by its source ID. Use this to retrieve the complete text of a memory source when you need more details than what's shown in search results.",
 			parameters: Type.Object({
 				source_id: Type.String({
 					description: "The unique source ID to fetch content for",
@@ -52,6 +52,6 @@ export function registerGetTool(
 				}
 			},
 		},
-		{ name: "cortex_get_content" },
+		{ name: "hydra_get_content" },
 	)
 }

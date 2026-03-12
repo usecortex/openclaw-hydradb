@@ -1,20 +1,20 @@
 import { Type } from "@sinclair/typebox"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
 
 export function registerDeleteTool(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	_cfg: CortexPluginConfig,
+	client: HydraClient,
+	_cfg: HydraPluginConfig,
 ): void {
 	api.registerTool(
 		{
-			name: "cortex_delete_memory",
-			label: "Cortex Delete Memory",
+			name: "hydra_delete_memory",
+			label: "Hydra Delete Memory",
 			description:
-				"Delete a specific memory from Cortex by its memory ID. Use this when the user explicitly asks you to forget something or remove a specific piece of stored information. Always confirm the memory ID before deleting.",
+				"Delete a specific memory from Hydra by its memory ID. Use this when the user explicitly asks you to forget something or remove a specific piece of stored information. Always confirm the memory ID before deleting.",
 			parameters: Type.Object({
 				memory_id: Type.String({
 					description: "The unique ID of the memory to delete",
@@ -49,6 +49,6 @@ export function registerDeleteTool(
 				}
 			},
 		},
-		{ name: "cortex_delete_memory" },
+		{ name: "hydra_delete_memory" },
 	)
 }

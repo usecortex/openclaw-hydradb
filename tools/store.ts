@@ -1,31 +1,31 @@
 import { Type } from "@sinclair/typebox"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
-import type { CortexClient } from "../client.ts"
-import type { CortexPluginConfig } from "../config.ts"
+import type { HydraClient } from "../client.ts"
+import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
 import { extractAllTurns, filterIgnoredTurns } from "../messages.ts"
 import { toToolSourceId } from "../session.ts"
-import type { ConversationTurn } from "../types/cortex.ts"
+import type { ConversationTurn } from "../types/hydra.ts"
 
 const MAX_STORE_TURNS = 10
 
 function removeInjectedBlocks(text: string): string {
-	return text.replace(/<cortex-context>[\s\S]*?<\/cortex-context>\s*/g, "").trim()
+	return text.replace(/<hydra-context>[\s\S]*?<\/hydra-context>\s*/g, "").trim()
 }
 
 export function registerStoreTool(
 	api: OpenClawPluginApi,
-	client: CortexClient,
-	cfg: CortexPluginConfig,
+	client: HydraClient,
+	cfg: HydraPluginConfig,
 	getSessionId: () => string | undefined,
 	getMessages: () => unknown[],
 ): void {
 	api.registerTool(
 		{
-			name: "cortex_store",
-			label: "Cortex Store",
+			name: "hydra_store",
+			label: "Hydra Store",
 			description:
-				"Save the full conversation history to Cortex AI memory. Use this to persist facts, preferences, or decisions the user wants remembered. The complete chat history will be sent for context-rich storage.",
+				"Save the full conversation history to Hydra DB memory. Use this to persist facts, preferences, or decisions the user wants remembered. The complete chat history will be sent for context-rich storage.",
 			parameters: Type.Object({
 				text: Type.String({
 					description: "A brief summary or note about what is being saved",
@@ -87,7 +87,7 @@ export function registerStoreTool(
 						content: [
 							{
 								type: "text" as const,
-								text: `Saved ${annotatedTurns.length} conversation turns to Cortex (${sourceId}). Note: "${params.text.length > 80 ? `${params.text.slice(0, 80)}…` : params.text}"`,
+								text: `Saved ${annotatedTurns.length} conversation turns to Hydra (${sourceId}). Note: "${params.text.length > 80 ? `${params.text.slice(0, 80)}…` : params.text}"`,
 							},
 						],
 					}
@@ -105,12 +105,12 @@ export function registerStoreTool(
 					content: [
 						{
 							type: "text" as const,
-							text: `Saved to Cortex: "${params.text.length > 80 ? `${params.text.slice(0, 80)}…` : params.text}"`,
+							text: `Saved to Hydra: "${params.text.length > 80 ? `${params.text.slice(0, 80)}…` : params.text}"`,
 						},
 					],
 				}
 			},
 		},
-		{ name: "cortex_store" },
+		{ name: "hydra_store" },
 	)
 }
