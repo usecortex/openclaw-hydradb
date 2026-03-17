@@ -5,7 +5,7 @@ State-of-the-art agentic memory for OpenClaw powered by [Hydra DB](https://hydra
 ## Install
 
 ```bash
-openclaw plugins install @hydra_db/openclaw-hydra-db
+openclaw plugins install @hydra_db/openclaw
 ```
 
 Restart OpenClaw after installing.
@@ -32,7 +32,7 @@ openclaw hydra onboard
 openclaw hydra onboard --advanced
 ```
 
-The wizard guides you through configuration with colored prompts and **writes your config to** `plugins.entries.openclaw-hydra-db.config` inside OpenClaw's settings file.
+The wizard guides you through configuration with colored prompts and **writes your config to** `plugins.entries.openclaw.config` inside OpenClaw's settings file.
 
 The path is resolved in the same order OpenClaw itself uses:
 
@@ -74,7 +74,7 @@ Or configure directly in OpenClaw's settings file:
 {
   "plugins": {
     "entries": {
-      "openclaw-hydra-db": {
+      "openclaw": {
         "enabled": true,
         "config": {
           "apiKey": "${HYDRA_OPENCLAW_API_KEY}",
