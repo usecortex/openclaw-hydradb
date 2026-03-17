@@ -17,7 +17,7 @@ const NOT_CONFIGURED_MSG =
 	"[hydra-db] Not configured. Run `openclaw hydra onboard` to set up credentials."
 
 export default {
-	id: "openclaw-hydra-db",
+	id: "openclaw",
 	name: "Hydra DB",
 	description:
 		"State-of-the-art agentic memory for OpenClaw powered by Hydra DB — auto-capture, recall, and graph-enriched context",
@@ -44,7 +44,7 @@ export default {
 
 		if (!cfg) {
 			api.registerService({
-				id: "openclaw-hydra-db",
+				id: "openclaw",
 				start: () => console.log(NOT_CONFIGURED_MSG),
 				stop: () => {},
 			})
@@ -97,7 +97,7 @@ export default {
 		registerOnboardingSlashCommands(api, client, cfg)
 
 		api.registerService({
-			id: "openclaw-hydra-db",
+			id: "openclaw",
 			start: () => log.info("plugin started"),
 			stop: () => log.info("plugin stopped"),
 		})
