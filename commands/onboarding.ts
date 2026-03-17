@@ -239,11 +239,11 @@ function persistConfig(configObj: Record<string, unknown>): boolean {
 
 		if (!root.plugins) root.plugins = {}
 		if (!root.plugins.entries) root.plugins.entries = {}
-		if (!root.plugins.entries["openclaw-hydra-db"]) {
-			root.plugins.entries["openclaw-hydra-db"] = { enabled: true }
+		if (!root.plugins.entries["openclaw"]) {
+			root.plugins.entries["openclaw"] = { enabled: true }
 		}
 
-		root.plugins.entries["openclaw-hydra-db"].config = configObj
+		root.plugins.entries["openclaw"].config = configObj
 
 		fs.writeFileSync(OPENCLAW_CONFIG_PATH, JSON.stringify(root, null, 2) + "\n")
 		return true
@@ -311,7 +311,7 @@ async function runBasicWizard(cfg?: HydraPluginConfig): Promise<void> {
 			}
 		} else {
 			console.log()
-			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw-hydra-db.config:${c.reset}`)
+			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw.config:${c.reset}`)
 			console.log()
 			for (const line of JSON.stringify(configObj, null, 2).split("\n")) {
 				console.log(`    ${c.cyan}${line}${c.reset}`)
@@ -415,7 +415,7 @@ async function runAdvancedWizard(cfg?: HydraPluginConfig): Promise<void> {
 			}
 		} else {
 			console.log()
-			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw-hydra-db.config:${c.reset}`)
+			console.log(`  ${c.yellow}${c.bold}Add to openclaw.json plugins.entries.openclaw.config:${c.reset}`)
 			console.log()
 			for (const line of JSON.stringify(configObj, null, 2).split("\n")) {
 				console.log(`    ${c.cyan}${line}${c.reset}`)
