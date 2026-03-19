@@ -3,7 +3,7 @@ import { HydraClient } from "./client.ts"
 import type { HydraPluginConfig } from "./config.ts"
 import { registerOnboardingCli as createOnboardingCliRegistrar, registerOnboardingSlashCommands } from "./commands/onboarding.ts"
 import { registerSlashCommands } from "./commands/slash.ts"
-import { hydraConfigSchema, tryParseConfig } from "./config.ts"
+import { hydraConfigSchema, parseConfig } from "./config.ts"
 import { createIngestionHook } from "./hooks/capture.ts"
 import { createRecallHook } from "./hooks/recall.ts"
 import { log } from "./log.ts"
@@ -25,8 +25,21 @@ export default {
 	configSchema: hydraConfigSchema,
 
 	register(api: OpenClawPluginApi) {
-		const cfg = tryParseConfig(api.pluginConfig)
-		const cliClient = cfg ? new HydraClient(cfg.apiKey, cfg.tenantId, cfg.subTenantId) : null
+		let cfg: HydraPluginConfig | null = null
+		let configError: Error | null = null
+
+		try {
+			cfg = parseConfig(api.pluginConfig)
+		} catch (err) {
+			configError =
+				err instanceof Error ? err : new Error(String(err))
+		}
+
+		const cliClient = cfg
+			? new HydraClient(cfg.apiKey, cfg.tenantId, cfg.subTenantId, {
+				requestTimeoutMs: cfg.requestTimeoutMs,
+			})
+			: null
 
 		// Always register ALL CLI commands so they appear in help text.
 		// Non-onboard commands guard on credentials at runtime.
@@ -37,15 +50,34 @@ export default {
 					.description("Hydra DB memory commands")
 
 				createOnboardingCliRegistrar(cfg ?? undefined)(root)
-				registerHydraCliCommands(root, cliClient, cfg)
+				registerHydraCliCommands(
+					root,
+					cliClient,
+					cfg,
+					configError?.message,
+				)
 			},
 			{ commands: ["hydra"] },
 		)
+		registerOnboardingSlashCommands(
+			api,
+			cliClient,
+			cfg,
+			configError?.message,
+		)
 
 		if (!cfg) {
+			if (configError) {
+				api.logger.warn(`[hydra-db] ${configError.message}`)
+			}
 			api.registerService({
 				id: "openclaw",
-				start: () => console.log(NOT_CONFIGURED_MSG),
+				start: () => {
+					console.log(NOT_CONFIGURED_MSG)
+					if (configError) {
+						console.log(`[hydra-db] ${configError.message}`)
+					}
+				},
 				stop: () => {},
 			})
 			return
@@ -54,7 +86,12 @@ export default {
 		// Full plugin registration — credentials present
 		log.init(api.logger, cfg.debug)
 
-		const client = new HydraClient(cfg.apiKey, cfg.tenantId, cfg.subTenantId)
+		const client = new HydraClient(
+			cfg.apiKey,
+			cfg.tenantId,
+			cfg.subTenantId,
+			{ requestTimeoutMs: cfg.requestTimeoutMs },
+		)
 
 		let activeSessionId: string | undefined
 		let conversationMessages: unknown[] = []
@@ -68,7 +105,7 @@ export default {
 		registerGetTool(api, client, cfg)
 
 		if (cfg.autoRecall) {
-			const onRecall = createRecallHook(client, cfg)
+			const onRecall = createRecallHook(client, cfg, getMessages)
 			api.on(
 				"before_agent_start",
 				(event: Record<string, unknown>, ctx: Record<string, unknown>) => {
@@ -81,7 +118,11 @@ export default {
 		}
 
 		if (cfg.autoCapture) {
-			const captureHandler = createIngestionHook(client, cfg)
+			const captureHandler = createIngestionHook(
+				client,
+				cfg,
+				getMessages,
+			)
 			api.on(
 				"agent_end",
 				(event: Record<string, unknown>, ctx: Record<string, unknown>) => {
@@ -94,7 +135,6 @@ export default {
 		}
 
 		registerSlashCommands(api, client, cfg, getSessionId)
-		registerOnboardingSlashCommands(api, client, cfg)
 
 		api.registerService({
 			id: "openclaw",
@@ -112,10 +152,14 @@ function registerHydraCliCommands(
 	root: any,
 	client: HydraClient | null,
 	cfg: HydraPluginConfig | null,
+	configErrorMessage?: string,
 ): void {
 	const requireCreds = (): { client: HydraClient; cfg: HydraPluginConfig } | null => {
 		if (client && cfg) return { client, cfg }
 		console.error(NOT_CONFIGURED_MSG)
+		if (configErrorMessage) {
+			console.error(`[hydra-db] ${configErrorMessage}`)
+		}
 		return null
 	}
 
@@ -202,6 +246,7 @@ function registerHydraCliCommands(
 
 			console.log(`Tenant:       ${ctx.client.getTenantId()}`)
 			console.log(`Sub-Tenant:   ${ctx.client.getSubTenantId()}`)
+			console.log(`Timeout (ms): ${ctx.cfg.requestTimeoutMs}`)
 			console.log(`Auto-Recall:  ${ctx.cfg.autoRecall}`)
 			console.log(`Auto-Capture: ${ctx.cfg.autoCapture}`)
 			console.log(`Recall Mode:  ${ctx.cfg.recallMode}`)

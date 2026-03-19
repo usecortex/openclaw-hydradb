@@ -14,24 +14,81 @@ import type {
 } from "./types/hydra.ts"
 
 const API_BASE = "https://api.hydradb.com"
+const DEFAULT_REQUEST_TIMEOUT_MS = 15_000
 
 const INGEST_INSTRUCTIONS =
-	"Focus on extracting user preferences, habits, opinions, likes, dislikes, " +
-	"goals, and recurring themes. Capture any stated or implied personal context " +
-	"that would help personalise future interactions. Capture important personal details like " +
-	"name, age, email ids, phone numbers, etc. along with the original name and context " +
-	"so that it can be used to personalise future interactions."
+	"Focus on stable user preferences, habits, opinions, goals, and recurring " +
+	"context that would help personalise future interactions. Capture high-level " +
+	"biographical details only when they are clearly useful and not unusually " +
+	"sensitive. Do not store secrets, credentials, access tokens, one-time codes, " +
+	"financial account details, government IDs, private keys, or similarly " +
+	"sensitive identifiers unless the user explicitly asks for them to be remembered."
+
+function describeRequestPayload(payload: unknown): string {
+	if (!payload || typeof payload !== "object") return "no payload"
+
+	const record = payload as Record<string, unknown>
+
+	if (Array.isArray(record.memories)) {
+		let turnCount = 0
+		let characterCount = 0
+
+		for (const memory of record.memories) {
+			if (!memory || typeof memory !== "object") continue
+			const item = memory as Record<string, unknown>
+
+			if (typeof item.text === "string") {
+				characterCount += item.text.length
+			}
+
+			if (!Array.isArray(item.user_assistant_pairs)) continue
+			turnCount += item.user_assistant_pairs.length
+
+			for (const turn of item.user_assistant_pairs) {
+				if (!turn || typeof turn !== "object") continue
+				const pair = turn as Record<string, unknown>
+				if (typeof pair.user === "string") characterCount += pair.user.length
+				if (typeof pair.assistant === "string") {
+					characterCount += pair.assistant.length
+				}
+			}
+		}
+
+		return `memories=${record.memories.length} turns=${turnCount} chars=${characterCount}`
+	}
+
+	if (typeof record.query === "string") {
+		return `queryChars=${record.query.length} maxResults=${String(record.max_results ?? "default")} mode=${String(record.mode ?? "default")} graph=${String(record.graph_context ?? true)}`
+	}
+
+	if (typeof record.source_id === "string") {
+		return `sourceId=${record.source_id} mode=${String(record.mode ?? "content")}`
+	}
+
+	if (typeof record.kind === "string") {
+		return `kind=${record.kind}`
+	}
+
+	return `keys=${Object.keys(record).join(",")}`
+}
 
 export class HydraClient {
 	private apiKey: string
 	private tenantId: string
 	private subTenantId: string
+	private requestTimeoutMs: number
 
-	constructor(apiKey: string, tenantId: string, subTenantId: string) {
+	constructor(
+		apiKey: string,
+		tenantId: string,
+		subTenantId: string,
+		opts?: { requestTimeoutMs?: number },
+	) {
 		this.apiKey = apiKey
 		this.tenantId = tenantId
 		this.subTenantId = subTenantId
-		log.info(`connected (tenant=${tenantId}, sub=${subTenantId})`)
+		this.requestTimeoutMs =
+			opts?.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS
 	}
 
 	private headers(): Record<string, string> {
@@ -41,34 +98,56 @@ export class HydraClient {
 		}
 	}
 
-	private async post<T>(path: string, body: unknown): Promise<T> {
-		const url = `${API_BASE}${path}`
-		log.debug("POST", path, body)
-		const res = await fetch(url, {
-			method: "POST",
-			headers: this.headers(),
-			body: JSON.stringify(body),
-		})
-		if (!res.ok) {
-			const text = await res.text().catch(() => "")
-			throw new Error(`Hydra ${path} → ${res.status}: ${text}`)
+	private async request<T>(
+		method: "DELETE" | "POST",
+		path: string,
+		opts?: {
+			body?: unknown
+			params?: Record<string, string>
+		},
+	): Promise<T> {
+		const qs = opts?.params
+			? `?${new URLSearchParams(opts.params).toString()}`
+			: ""
+		const url = `${API_BASE}${path}${qs}`
+		const controller = new AbortController()
+		const timeout = setTimeout(
+			() => controller.abort(),
+			this.requestTimeoutMs,
+		)
+
+		log.debug(`${method} ${path} ${describeRequestPayload(opts?.body ?? opts?.params)}`)
+
+		try {
+			const res = await fetch(url, {
+				method,
+				signal: controller.signal,
+				body: opts?.body ? JSON.stringify(opts.body) : undefined,
+				headers: this.headers(),
+			})
+			if (!res.ok) {
+				const text = await res.text().catch(() => "")
+				throw new Error(`Hydra ${path} → ${res.status}: ${text}`)
+			}
+			return res.json() as Promise<T>
+		} catch (err) {
+			if (err instanceof Error && err.name === "AbortError") {
+				throw new Error(
+					`Hydra ${path} timed out after ${this.requestTimeoutMs}ms`,
+				)
+			}
+			throw err
+		} finally {
+			clearTimeout(timeout)
 		}
-		return res.json() as Promise<T>
+	}
+
+	private async post<T>(path: string, body: unknown): Promise<T> {
+		return this.request<T>("POST", path, { body })
 	}
 
 	private async del<T>(path: string, params: Record<string, string>): Promise<T> {
-		const qs = new URLSearchParams(params).toString()
-		const url = `${API_BASE}${path}?${qs}`
-		log.debug("DELETE", path, params)
-		const res = await fetch(url, {
-			method: "DELETE",
-			headers: this.headers(),
-		})
-		if (!res.ok) {
-			const text = await res.text().catch(() => "")
-			throw new Error(`Hydra ${path} → ${res.status}: ${text}`)
-		}
-		return res.json() as Promise<T>
+		return this.request<T>("DELETE", path, { params })
 	}
 
 	// --- Ingest ---

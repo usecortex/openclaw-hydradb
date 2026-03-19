@@ -1,30 +1,39 @@
 import type { HydraClient } from "../client.ts"
 import type { HydraPluginConfig } from "../config.ts"
 import { log } from "../log.ts"
-import { extractAllTurns, filterIgnoredTurns } from "../messages.ts"
+import {
+	extractAllTurns,
+	filterIgnoredTurns,
+	stripInjectedHydraContext,
+} from "../messages.ts"
 import { toHookSourceId } from "../session.ts"
 import type { ConversationTurn } from "../types/hydra.ts"
 
 const MAX_HOOK_TURNS = -1
-
-function removeInjectedBlocks(text: string): string {
-	return text.replace(/<hydra-context>[\s\S]*?<\/hydra-context>\s*/g, "").trim()
-}
+const MIN_TURN_TEXT_LENGTH = 5
 
 export function createIngestionHook(
 	client: HydraClient,
 	cfg: HydraPluginConfig,
+	getMessages: () => unknown[],
 ) {
+	const lastCapturedTurnBySession = new Map<string, string>()
+
 	return async (event: Record<string, unknown>, sessionId: string | undefined) => {
 		try {
-			log.debug(`[capture] hook fired — success=${event.success} msgs=${Array.isArray(event.messages) ? event.messages.length : "N/A"} sid=${sessionId ?? "none"}`)
+			const messages =
+				Array.isArray(event.messages) && event.messages.length > 0
+					? event.messages
+					: getMessages()
 
-			if (!event.success) {
-				log.debug("[capture] skipped — event.success is falsy")
+			log.debug(`[capture] hook fired — success=${event.success} msgs=${messages.length} sid=${sessionId ?? "none"}`)
+
+			if (event.success === false) {
+				log.debug("[capture] skipped — event.success is false")
 				return
 			}
-			if (!Array.isArray(event.messages) || event.messages.length === 0) {
-				log.debug("[capture] skipped — no messages in event")
+			if (messages.length === 0) {
+				log.debug("[capture] skipped — no messages available")
 				return
 			}
 
@@ -33,7 +42,7 @@ export function createIngestionHook(
 				return
 			}
 
-			const rawTurns = extractAllTurns(event.messages)
+			const rawTurns = extractAllTurns(messages)
 			const allTurns = filterIgnoredTurns(rawTurns, cfg.ignoreTerm)
 
 			if (rawTurns.length > 0 && allTurns.length < rawTurns.length) {
@@ -41,19 +50,24 @@ export function createIngestionHook(
 			}
 
 			if (allTurns.length === 0) {
-				log.debug(`[capture] skipped — no user-assistant turns found in ${event.messages.length} messages`)
-				const roles = event.messages
+				log.debug(`[capture] skipped — no user-assistant turns found in ${messages.length} messages`)
+				const roles = messages
 					.slice(-5)
 					.map((m) => (m && typeof m === "object" ? (m as Record<string, unknown>).role : "?"))
 				log.debug(`[capture] last 5 message roles: ${JSON.stringify(roles)}`)
 				return
 			}
 
-			const recentTurns = MAX_HOOK_TURNS === -1 ? allTurns : allTurns.slice(-MAX_HOOK_TURNS) 
+			const recentTurns =
+				MAX_HOOK_TURNS === -1 ? allTurns : allTurns.slice(-MAX_HOOK_TURNS)
 			const turns: ConversationTurn[] = recentTurns.map((t) => ({
-				user: removeInjectedBlocks(t.user),
-				assistant: removeInjectedBlocks(t.assistant),
-			})).filter((t) => t.user.length >= 5 && t.assistant.length >= 5)
+				user: stripInjectedHydraContext(t.user),
+				assistant: stripInjectedHydraContext(t.assistant),
+			})).filter(
+				(t) =>
+					t.user.length >= MIN_TURN_TEXT_LENGTH &&
+					t.assistant.length >= MIN_TURN_TEXT_LENGTH,
+			)
 
 			if (turns.length === 0) {
 				log.debug("[capture] skipped — all turns too short after cleaning")
@@ -61,6 +75,12 @@ export function createIngestionHook(
 			}
 
 			const sourceId = toHookSourceId(sessionId)
+			const latestTurn = turns[turns.length - 1]!
+			const dedupeKey = `${latestTurn.user}\u0000${latestTurn.assistant}`
+			if (lastCapturedTurnBySession.get(sessionId) === dedupeKey) {
+				log.debug("[capture] skipped — latest completed turn already captured")
+				return
+			}
 
 			const now = new Date()
 			const timestamp = now.toISOString()
@@ -93,6 +113,7 @@ export function createIngestionHook(
 				},
 			)
 
+			lastCapturedTurnBySession.set(sessionId, dedupeKey)
 			log.debug("[capture] ingestion succeeded")
 		} catch (err) {
 			log.error("[capture] hook error", err)
