@@ -12,6 +12,7 @@ import { log } from "../log.ts"
 const DEFAULTS = {
 	subTenantId: "hydra-openclaw-plugin",
 	ignoreTerm: "hydra-ignore",
+	requestTimeoutMs: 15_000,
 	autoRecall: true,
 	autoCapture: true,
 	maxRecallResults: 10,
@@ -55,6 +56,66 @@ function ask(rl: readline.Interface, question: string): Promise<string> {
 	return new Promise((resolve) => rl.question(question, resolve))
 }
 
+async function askSecret(question: string): Promise<string> {
+	if (!process.stdin.isTTY) {
+		const rl = createRl()
+		try {
+			return await ask(rl, question)
+		} finally {
+			rl.close()
+		}
+	}
+
+	return new Promise((resolve, reject) => {
+		const stdin = process.stdin
+		const wasRaw = stdin.isRaw
+		let value = ""
+
+		const cleanup = () => {
+			stdin.off("keypress", onKeypress)
+			if (!wasRaw) stdin.setRawMode(false)
+		}
+
+		const onKeypress = (
+			str: string,
+			key: { ctrl?: boolean; meta?: boolean; name?: string },
+		) => {
+			if (key.ctrl && key.name === "c") {
+				cleanup()
+				process.stdout.write("\n")
+				reject(new Error("Prompt cancelled"))
+				return
+			}
+
+			if (key.name === "return" || key.name === "enter") {
+				cleanup()
+				process.stdout.write("\n")
+				resolve(value)
+				return
+			}
+
+			if (key.name === "backspace") {
+				if (value.length > 0) {
+					value = value.slice(0, -1)
+					process.stdout.write("\b \b")
+				}
+				return
+			}
+
+			if (!str || key.ctrl || key.meta) return
+
+			value += str
+			process.stdout.write("*".repeat(str.length))
+		}
+
+		readline.emitKeypressEvents(stdin)
+		stdin.resume()
+		if (!wasRaw) stdin.setRawMode(true)
+		process.stdout.write(question)
+		stdin.on("keypress", onKeypress)
+	})
+}
+
 async function promptText(
 	rl: readline.Interface,
 	label: string,
@@ -65,7 +126,16 @@ async function promptText(
 	const prefix = `  ${c.cyan}?${c.reset} ${c.bold}${label}${c.reset}${hint}${c.dim} ›${c.reset} `
 
 	while (true) {
-		const raw = await ask(rl, prefix)
+		const raw = opts?.secret
+			? await (async () => {
+				rl.pause()
+				try {
+					return await askSecret(prefix)
+				} finally {
+					rl.resume()
+				}
+			})()
+			: await ask(rl, prefix)
 		const value = raw.trim()
 		if (value) return value
 		if (def) return def
@@ -168,6 +238,7 @@ type WizardResult = {
 	tenantId: string
 	subTenantId: string
 	ignoreTerm: string
+	requestTimeoutMs?: number
 	autoRecall?: boolean
 	autoCapture?: boolean
 	maxRecallResults?: number
@@ -187,6 +258,12 @@ function buildConfigObj(result: WizardResult): Record<string, unknown> {
 	}
 	if (result.ignoreTerm !== DEFAULTS.ignoreTerm) {
 		obj.ignoreTerm = result.ignoreTerm
+	}
+	if (
+		result.requestTimeoutMs !== undefined &&
+		result.requestTimeoutMs !== DEFAULTS.requestTimeoutMs
+	) {
+		obj.requestTimeoutMs = result.requestTimeoutMs
 	}
 	if (result.autoRecall !== undefined && result.autoRecall !== DEFAULTS.autoRecall) {
 		obj.autoRecall = result.autoRecall
@@ -234,8 +311,18 @@ const OPENCLAW_CONFIG_PATH = resolveOpenClawConfigPath()
 
 function persistConfig(configObj: Record<string, unknown>): boolean {
 	try {
-		const raw = fs.readFileSync(OPENCLAW_CONFIG_PATH, "utf-8")
-		const root = JSON.parse(raw)
+		fs.mkdirSync(path.dirname(OPENCLAW_CONFIG_PATH), { recursive: true })
+
+		let root: Record<string, any> = {}
+		if (fs.existsSync(OPENCLAW_CONFIG_PATH)) {
+			const raw = fs.readFileSync(OPENCLAW_CONFIG_PATH, "utf-8").trim()
+			if (raw) {
+				const parsed = JSON.parse(raw)
+				if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+					root = parsed as Record<string, any>
+				}
+			}
+		}
 
 		if (!root.plugins) root.plugins = {}
 		if (!root.plugins.entries) root.plugins.entries = {}
@@ -247,7 +334,8 @@ function persistConfig(configObj: Record<string, unknown>): boolean {
 
 		fs.writeFileSync(OPENCLAW_CONFIG_PATH, JSON.stringify(root, null, 2) + "\n")
 		return true
-	} catch {
+	} catch (err) {
+		log.error("[onboard] failed to persist config", err)
 		return false
 	}
 }
@@ -355,6 +443,13 @@ async function runAdvancedWizard(cfg?: HydraPluginConfig): Promise<void> {
 		const ignoreTerm = await promptText(rl, "Ignore Term", {
 			default: cfg?.ignoreTerm ?? DEFAULTS.ignoreTerm,
 		})
+		const requestTimeoutMs = await promptNumber(
+			rl,
+			"Request Timeout (ms)",
+			cfg?.requestTimeoutMs ?? DEFAULTS.requestTimeoutMs,
+			1000,
+			120000,
+		)
 
 		printSection("Recall Settings")
 
@@ -375,6 +470,7 @@ async function runAdvancedWizard(cfg?: HydraPluginConfig): Promise<void> {
 			tenantId,
 			subTenantId,
 			ignoreTerm,
+			requestTimeoutMs,
 			autoRecall,
 			autoCapture,
 			maxRecallResults,
@@ -394,6 +490,7 @@ async function runAdvancedWizard(cfg?: HydraPluginConfig): Promise<void> {
 		printSummaryRow("Auto-Recall", String(autoRecall))
 		printSummaryRow("Auto-Capture", String(autoCapture))
 		printSummaryRow("Ignore Term", ignoreTerm)
+		printSummaryRow("Timeout (ms)", String(requestTimeoutMs))
 		printSummaryRow("Max Results", String(maxRecallResults))
 		printSummaryRow("Recall Mode", recallMode)
 		printSummaryRow("Graph Context", String(graphContext))
@@ -448,8 +545,9 @@ export function registerOnboardingCli(
 
 export function registerOnboardingSlashCommands(
 	api: OpenClawPluginApi,
-	client: HydraClient,
-	cfg: HydraPluginConfig,
+	client: HydraClient | null,
+	cfg: HydraPluginConfig | null,
+	configError?: string,
 ): void {
 	api.registerCommand({
 		name: "hydra-onboard",
@@ -458,23 +556,40 @@ export function registerOnboardingSlashCommands(
 		requireAuth: false,
 		handler: async () => {
 			try {
+				const configured = !!cfg
+				const subTenantId =
+					client?.getSubTenantId() ??
+					cfg?.subTenantId ??
+					DEFAULTS.subTenantId
 				const lines: string[] = [
-					"=== Hydra DB — Current Config ===",
+					configured
+						? "=== Hydra DB — Current Config ==="
+						: "=== Hydra DB — Setup Required ===",
 					"",
-					`  API Key:       ${cfg.apiKey ? `${mask(cfg.apiKey)} ✓` : "NOT SET ✗"}`,
-					`  Tenant ID:     ${cfg.tenantId ? `${mask(cfg.tenantId, 8)} ✓` : "NOT SET ✗"}`,
-					`  Sub-Tenant:    ${client.getSubTenantId()}`,
-					`  Ignore Term:   ${cfg.ignoreTerm}`,
-					`  Auto-Recall:   ${cfg.autoRecall}`,
-					`  Auto-Capture:  ${cfg.autoCapture}`,
-					`  Recall Mode:   ${cfg.recallMode}`,
-					`  Graph Context: ${cfg.graphContext}`,
-					`  Max Results:   ${cfg.maxRecallResults}`,
-					`  Debug:         ${cfg.debug}`,
+					`  Status:        ${configured ? "Configured ✓" : "Not configured ✗"}`,
+					`  API Key:       ${cfg?.apiKey ? `${mask(cfg.apiKey)} ✓` : "NOT SET ✗"}`,
+					`  Tenant ID:     ${cfg?.tenantId ? `${mask(cfg.tenantId, 8)} ✓` : "NOT SET ✗"}`,
+						`  Sub-Tenant:    ${subTenantId}`,
+						`  Ignore Term:   ${cfg?.ignoreTerm ?? DEFAULTS.ignoreTerm}`,
+						`  Timeout (ms):  ${cfg?.requestTimeoutMs ?? DEFAULTS.requestTimeoutMs}`,
+						`  Auto-Recall:   ${cfg?.autoRecall ?? DEFAULTS.autoRecall}`,
+						`  Auto-Capture:  ${cfg?.autoCapture ?? DEFAULTS.autoCapture}`,
+					`  Recall Mode:   ${cfg?.recallMode ?? DEFAULTS.recallMode}`,
+					`  Graph Context: ${cfg?.graphContext ?? DEFAULTS.graphContext}`,
+					`  Max Results:   ${cfg?.maxRecallResults ?? DEFAULTS.maxRecallResults}`,
+					`  Debug:         ${cfg?.debug ?? DEFAULTS.debug}`,
+					`  Config Path:   ${OPENCLAW_CONFIG_PATH}`,
+				]
+
+				if (configError) {
+					lines.push("", `  Reason:        ${configError}`)
+				}
+
+				lines.push(
 					"",
 					"Tip: Run `hydra onboard` in the CLI for an interactive configuration wizard,",
 					"     or `hydra onboard --advanced` for all options.",
-				]
+				)
 				return { text: lines.join("\n") }
 			} catch (err) {
 				log.error("/hydra-onboard", err)

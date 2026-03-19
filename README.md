@@ -97,6 +97,7 @@ openclaw gateway restart
 | Key                  | Type        | Default               | Description                                                                    |
 | -------------------- | ----------- | --------------------- | ------------------------------------------------------------------------------ |
 | `subTenantId`      | `string`  | `"hydra-openclaw-plugin"` | Sub-tenant for data partitioning within your tenant                      |
+| `requestTimeoutMs` | `number`  | `15000`             | Hydra API timeout in milliseconds                                              |
 | `autoRecall`       | `boolean` | `true`              | Inject relevant memories before every AI turn                                  |
 | `autoCapture`      | `boolean` | `true`              | Store conversation exchanges after every AI turn                               |
 | `maxRecallResults` | `number`  | `10`                | Max memory chunks injected into context per turn                               |
@@ -108,7 +109,7 @@ openclaw gateway restart
 ## How It Works
 
 - **Auto-Recall** — Before every AI turn, queries Hydra (`/recall/recall_preferences`) for relevant memories and injects graph-enriched context (entity paths, chunk relations, extra context).
-- **Auto-Capture** — After every AI turn, the last user/assistant exchange is sent to Hydra (`/memories/add_memory`) as conversation pairs with `infer: true` and `upsert: true`. The session ID is used as `source_id` so Hydra groups exchanges per session and builds a knowledge graph automatically.
+- **Auto-Capture** — After every AI turn, the full completed session conversation is re-sent to Hydra (`/memories/add_memory`) as conversation pairs with `infer: true` and `upsert: true`. The session ID is used as `source_id` so Hydra keeps one evolving memory source per session and builds a knowledge graph automatically.
 
 ## Slash Commands
 

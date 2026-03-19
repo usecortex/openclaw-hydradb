@@ -16,7 +16,13 @@
 		"subTenantId": {
 			"label": "Sub-Tenant ID",
 			"placeholder": "hydra-openclaw",
-			"help": "Sub-tenant for data partitioning (default: hydra-openclaw)",
+			"help": "Sub-tenant for data partitioning (default: hydra-openclaw-plugin)",
+			"advanced": true
+		},
+		"requestTimeoutMs": {
+			"label": "Request Timeout (ms)",
+			"placeholder": "15000",
+			"help": "Hydra API timeout in milliseconds (default: 15000)",
 			"advanced": true
 		},
 		"autoRecall": {
@@ -61,6 +67,7 @@
 			"apiKey": { "type": "string" },
 			"tenantId": { "type": "string" },
 			"subTenantId": { "type": "string" },
+			"requestTimeoutMs": { "type": "number", "minimum": 1000, "maximum": 120000 },
 			"autoRecall": { "type": "boolean" },
 			"autoCapture": { "type": "boolean" },
 			"maxRecallResults": { "type": "number", "minimum": 1, "maximum": 50 },
