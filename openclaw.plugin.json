@@ -15,8 +15,8 @@
 		},
 		"subTenantId": {
 			"label": "Sub-Tenant ID",
-			"placeholder": "hydra-openclaw",
-			"help": "Sub-tenant for data partitioning (default: hydra-openclaw)",
+			"placeholder": "hydra-openclaw-plugin",
+			"help": "Sub-tenant for data partitioning (default: hydra-openclaw-plugin)",
 			"advanced": true
 		},
 		"autoRecall": {
