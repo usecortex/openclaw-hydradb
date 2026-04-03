@@ -170,3 +170,34 @@ Recalled context is injected inside `<hydra-context>` tags containing:
 
 - **Entity Paths** — Knowledge graph paths connecting entities relevant to the query
 - **Context Chunks** — Retrieved memory chunks with source titles, graph relations, and linked extra context
+
+## Contributing / Developer Setup
+
+To work on the plugin locally:
+
+```bash
+# One-command bootstrap: installs deps, runs type-check, creates .env
+make bootstrap
+
+# — or run the script directly —
+bash scripts/bootstrap.sh
+```
+
+Copy `.env.example` to `.env` and fill in your Hydra credentials (the bootstrap
+script does this automatically if `.env` doesn't exist yet):
+
+```bash
+cp .env.example .env
+# Then edit .env with your HYDRA_OPENCLAW_API_KEY and HYDRA_OPENCLAW_TENANT_ID
+```
+
+### Available Make targets
+
+| Target        | Description                                      |
+| ------------- | ------------------------------------------------ |
+| `make help`         | Show all available targets                 |
+| `make bootstrap`    | Full project bootstrap (install + check)   |
+| `make install`      | Install dependencies (`npm ci`)            |
+| `make check-types`  | Run TypeScript type-checking               |
+| `make test`         | Run tests (if configured)                  |
+| `make clean`        | Remove `node_modules/` and `dist/`         |
