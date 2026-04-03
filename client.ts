@@ -171,7 +171,7 @@ export class HydraClient {
 		const payload: ListDataRequest = {
 			tenant_id: this.tenantId,
 			sub_tenant_id: this.subTenantId,
-			kind: "memories",
+			kind: "knowledge",
 			...(sourceIds && { source_ids: sourceIds }),
 		}
 		return this.post<ListSourcesResponse>("/list/data", payload)

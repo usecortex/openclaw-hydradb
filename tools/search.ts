@@ -49,7 +49,7 @@ export function registerSearchTool(
 					content: [
 						{
 							type: "text" as const,
-							text: `Found ${res.chunks.length} \n\n---\nFull context:\n${contextStr}`,
+							text: `Found ${res.chunks.length} chunks\n\n---\nFull context:\n${contextStr}`,
 						},
 					],
 					details: {
