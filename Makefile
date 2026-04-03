@@ -16,7 +16,7 @@ check-types: ## Run TypeScript type-checking
 	npm run check-types
 
 test: ## Run tests (if configured)
-	@npm test 2>/dev/null || echo "No test script configured in package.json"
+	@npm test || echo "No test script configured in package.json"
 
 clean: ## Remove generated artifacts and dependencies
 	rm -rf node_modules/ dist/
