@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "type": "module",
   "description": "OpenClaw plugin for Hydra DB — the State-of-the-art agentic memory system with auto-capture, recall, and knowledge graph context for open-claw",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"
   },
