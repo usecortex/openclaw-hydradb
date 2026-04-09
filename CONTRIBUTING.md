@@ -8,7 +8,7 @@ All participants in this project are expected to follow our [Code of Conduct](CO
 
 ## Developer Certificate of Origin (DCO)
 
-This project uses the [Developer Certificate of Origin](https://developercertificate.org/) (DCO) instead of a Contributor License Agreement (CLA). The DCO is a lightweight mechanism that certifies you have the right to submit the code you are contributing. Every commit you submit **must** include a `Signed-off-by` line, and this requirement is enforced by CI.
+This project uses the [Developer Certificate of Origin](https://developercertificate.org/) (DCO) instead of a Contributor License Agreement (CLA). The DCO is a lightweight mechanism that certifies you have the right to submit the code you are contributing. Every commit you submit **must** include a `Signed-off-by` line. This is verified during code review and may be enforced by CI.
 
 ### How to sign off your commits
 
@@ -45,7 +45,7 @@ git rebase --signoff HEAD~N
 
 where `N` is the number of commits to update.
 
-**Commits without a valid `Signed-off-by` line will be rejected by CI and cannot be merged.**
+**Commits without a valid `Signed-off-by` line will not be merged.**
 
 For the full text of the DCO, see: https://developercertificate.org/
 

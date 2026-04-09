@@ -20,6 +20,5 @@ Closes #
 - [ ] This PR is linked to an issue
 - [ ] My commits are signed off (`git commit -s`) per the DCO
 - [ ] I have added/updated tests where applicable
-- [ ] `npm ci` and `npm run check-types` still work
+- [ ] `npm ci` installs cleanly and `npm run check-types` passes
 - [ ] I have not committed any secrets or credentials
-- [ ] My code passes type checking (`npm run check-types`)
