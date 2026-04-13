@@ -8,7 +8,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@sinclair/typebox": "0.34.47"
+    "@sinclair/typebox": "0.34.49"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
