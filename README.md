@@ -5,7 +5,7 @@ State-of-the-art agentic memory for OpenClaw powered by [Hydra DB](https://hydra
 ## Install
 
 ```bash
-openclaw plugins install @hydra_db/openclaw
+openclaw plugins install @hydradb/openclaw
 ```
 
 Restart OpenClaw after installing.
